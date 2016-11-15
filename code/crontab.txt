@@ -1,0 +1,8 @@
+Using crontab on Raspberry Pi to scedule data readings :
+
+"sudo crontab -e" - get into crontab set up
+
+"* * * * * echo `date +\%Y\%m\%d\%H\%M\%S`,`/home/pi/wiringPi/dht11` >> /home/pi/temp.log" - every minute issue dht11 code, and save result into temp.log
+
+"wget -P /var/www http://dygraphs.com/dygraph-combined.js" - getting the Dygraphs library
+
