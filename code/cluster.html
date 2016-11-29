@@ -1,0 +1,51 @@
+<html>
+<head>
+<script type="text/javascript" src="dygraph-combined.js"></script>
+</head>
+<body>
+<br>
+<canvas id="mycan" width="750" height="400"></canvas>
+
+<script type="text/javascript">
+
+var txt = "";
+var array;
+
+function readTextFile(file)
+{
+    var rawFile = new XMLHttpRequest();
+    rawFile.open("GET", file, false);
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4)
+        {
+            if(rawFile.status === 200 || rawFile.status == 0)
+            {
+                var allText = rawFile.responseText;
+                txt = txt.concat(allText);
+            }
+        }
+    }
+    rawFile.send(null);
+}
+
+	readTextFile("coordinates.log");
+	array = txt.split(',').map(Number);
+	//alert(array[0]);
+	
+	var can = document.getElementById('mycan');	
+	var con = can.getContext("2d");
+
+
+	var img=new Image();
+	var bee=new Image();
+	img.onload=function(){
+		con.drawImage(img,40,12);
+		con.drawImage(bee,array[0],array[1]);
+	};
+	img.src="hive.jpg";
+	bee.src="bee.png";
+
+</script>
+</body>
+</html>
