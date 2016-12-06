@@ -127,10 +127,10 @@ The concept of our project is to give an ability remotely track the status of th
     <h2>Step 3:</h2>
       <p>In this next step, we will be connecting the sensors to the Raspberry Pi. In my case I was struggling to connect multiple sensors, as in the most example of code, this particular sensor was using GPIO4, which is also GPCLK0. All other GPIO pins would not work with this particular code in C, nor with Python equivalent:</p>
       
-      <code><pre>#include <wiringPi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+      <code><pre>#include &lt;wiringPi.h>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
 #define MAXTIMINGS	85
 #define DHTPIN		7
 int dht11_dat[5] = { 0, 0, 0, 0, 0 };
@@ -151,7 +151,7 @@ void read_dht11_dat()
 	delayMicroseconds( 40 );
 	pinMode( DHTPIN, INPUT );
  
-	for ( i = 0; i < MAXTIMINGS; i++ )
+	for ( i = 0; i &lt; MAXTIMINGS; i++ )
 	{
 		counter = 0;
 		while ( digitalRead( DHTPIN ) == laststate )
@@ -168,16 +168,16 @@ void read_dht11_dat()
 		if ( counter == 255 )
 			break;
  
-		if ( (i >= 4) && (i % 2 == 0) )
+		if ( (i &gt;= 4) &amp;&amp; (i % 2 == 0) )
 		{
-			dht11_dat[j / 8] <<= 1;
-			if ( counter > 16 )
+			dht11_dat[j / 8] &lt;&lt;= 1;
+			if ( counter &gt; 16 )
 				dht11_dat[j / 8] |= 1;
 			j++;
 		}
 	}
  
-	if ( (j >= 40) &&
+	if ( (j &gt;= 40) &amp;&amp;
 	     (dht11_dat[4] == ( (dht11_dat[0] + dht11_dat[1] + dht11_dat[2] + dht11_dat[3]) & 0xFF) ) )
 	{
 		f = dht11_dat[2] * 9. / 5. + 32;
@@ -332,10 +332,10 @@ else:
 
 <br>
 <h3>C program for LED blink green</h3>
-<code><pre>#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <wiringPi.h>
+<code><pre>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;wiringPi.h&gt;
 int main (void)
 {
 	int i = 0;
@@ -344,7 +344,7 @@ int main (void)
 	//printf ("Success\n") ;
 	pinMode (0, OUTPUT) ;
 	pinMode (1, PWM_OUTPUT) ;
-	for (i = 0; i < 1; i++)
+	for (i = 0; i &lt; 1; i++)
 	{
 		digitalWrite (0, LOW) ;
 		pwmWrite (1, 1023) ;
@@ -360,10 +360,10 @@ int main (void)
 
 <br>
 <h3>C program for LED blink red</h3>
-<code><pre>#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <wiringPi.h>
+<code><pre>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;wiringPi.h&gt;
 int main (void)
 {
 	int i = 0;
@@ -372,7 +372,7 @@ int main (void)
 	//printf ("Fail\n") ;
 	pinMode (0, OUTPUT) ;
 	pinMode (1, PWM_OUTPUT) ;
-	for (i = 0; i < 1; i++)
+	for (i = 0; i &lt; 1; i++)
 	{
 		digitalWrite (0, HIGH);
 		pwmWrite (1, 0) ;
