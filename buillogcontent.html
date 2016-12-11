@@ -99,6 +99,10 @@ The concept of our project is to give an ability remotely track the status of th
     <td>Unit testing</td>
     <td>30 minutes</td>
   </tr>
+  <tr>
+    <td>Setting up Apache server with the code</td>
+    <td>30 minutes</td>
+  </tr>    
 </table>
       
       <p>The whole process should take around 2-3 days, if the appropriate tools are accessible (PCB print, laser cutter, soldering station). For myself the whole process was split into 15 weeks, where every week I committed few hours, in order to be on track and be able to finish everything by the week 15. Attached is the original project schedule:</p>
@@ -127,84 +131,7 @@ The concept of our project is to give an ability remotely track the status of th
     <h2>Step 3:</h2>
       <p>In this next step, we will be connecting the sensors to the Raspberry Pi. In my case I was struggling to connect multiple sensors, as in the most example of code, this particular sensor was using GPIO4, which is also GPCLK0. All other GPIO pins would not work with this particular code in C, nor with Python equivalent:</p>
       
-      <code><pre>#include &lt;wiringPi.h>
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdint.h&gt;
-#define MAXTIMINGS	85
-#define DHTPIN		7
-int dht11_dat[5] = { 0, 0, 0, 0, 0 };
- 
-void read_dht11_dat()
-{
-	uint8_t laststate	= HIGH;
-	uint8_t counter		= 0;
-	uint8_t j		= 0, i;
-	float	f; 
- 
-	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
- 
-	pinMode( DHTPIN, OUTPUT );
-	digitalWrite( DHTPIN, LOW );
-	delay( 18 );
-	digitalWrite( DHTPIN, HIGH );
-	delayMicroseconds( 40 );
-	pinMode( DHTPIN, INPUT );
- 
-	for ( i = 0; i &lt; MAXTIMINGS; i++ )
-	{
-		counter = 0;
-		while ( digitalRead( DHTPIN ) == laststate )
-		{
-			counter++;
-			delayMicroseconds( 1 );
-			if ( counter == 255 )
-			{
-				break;
-			}
-		}
-		laststate = digitalRead( DHTPIN );
- 
-		if ( counter == 255 )
-			break;
- 
-		if ( (i &gt;= 4) &amp;&amp; (i % 2 == 0) )
-		{
-			dht11_dat[j / 8] &lt;&lt;= 1;
-			if ( counter &gt; 16 )
-				dht11_dat[j / 8] |= 1;
-			j++;
-		}
-	}
- 
-	if ( (j &gt;= 40) &amp;&amp;
-	     (dht11_dat[4] == ( (dht11_dat[0] + dht11_dat[1] + dht11_dat[2] + dht11_dat[3]) & 0xFF) ) )
-	{
-		f = dht11_dat[2] * 9. / 5. + 32;
-		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
-			dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3], f );
-	}else  {
-		printf( "Data not good, skip\n" );
-	}
-}
- 
-int main( void )
-{
-	printf( "Raspberry Pi wiringPi DHT11 Temperature test program\n" );
- 
-	if ( wiringPiSetup() == -1 )
-		exit( 1 );
- 
-	while ( 1 )
-	{
-		read_dht11_dat();
-		delay( 1000 ); 
-	}
- 
-	return(0);
-}
-
-</pre></code>
+      <a href="code/dht11.c">DHT11 C code, can be used only with GPIO4</a>
 <br>
 
     <img src="media/rasp_pinout.png" alt="laser_cut" style="width:600px;height:200px;">
@@ -214,6 +141,11 @@ The following is the wiring that I used to connect my DHT11 to Raspberry PI’s 
 </p>
 
     <img src="media/scheme.png" alt="laser_cut" style="width:600px;height:600px;">
+  <p><b>Mechanical Assembly Video</b></p>    
+  <video width="320" height="240" controls>
+  <source src="media/assembly.mp4" type="video/mp4">
+  Your browser does not support the video tag .
+  </video> 
     
     <p>As I said previously, you don’t need to have a resistor, if you’ll get the sensor with the PCS. In my case had it soldered and isolated with the electrical tape.</p>
     
@@ -227,7 +159,8 @@ The following is the wiring that I used to connect my DHT11 to Raspberry PI’s 
   <p>As was mentioned before I used the PCB that was provided by Humber College. The EAGLE software was used in order to draw it. We received freshly printed PCBs and had to solder all of the components on them. In my project, I used the LED mounted on top of the PCB in order to indicate when data from sensors is being read. Following are the schematics and board for PCB.</p>
   
   
-
+  <img src="media/myPCB.jpg" alt="PCB_scheme" style="width:400px;height:400px;">
+  <br>
   <img src="media/PCB_scheme.png" alt="PCB_scheme" style="width:600px;height:400px;">
   <br>
   <a href="media/HSHV4-student%20version.sch">Scheme</a>
@@ -247,152 +180,51 @@ The following is the wiring that I used to connect my DHT11 to Raspberry PI’s 
  
   <SECTION ID="Power_Up">
   <H1>Power Up</H1>
-  <p>Now, when all of the wiring are done, we can use the Python code in order to read the data. The following is the code that initializes the GPIO pins 22-25 and tries to read the data from them. In case of success, the “1.c” program gets called, which will light up the LED on the PCB green, indicating that the data read was successful. But, if there were any issues, the “2.c” program is going to be called, which will light red.</p>
+  <p>Now, when all of the wiring are done, we can use the Python code in order to read the data. The following is the code that initializes the GPIO pins 22-25 and tries to read the data from them. In case of success, the avarage tempe and humidity will be captured. Next program reads the difference in sensor readings and calculates the coordinates, that will be displayed later on the web page. Th</p>
   
-  <h3>Pythone program</h3>
-<code><pre>#!/usr/bin/python
-
-# Copyright (c) 2014 Adafruit Industries
-# Author: Tony DiCola
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-import Adafruit_DHT
-from subprocess import call
-
-# Sensor should be set to Adafruit_DHT.DHT11,
-# Adafruit_DHT.DHT22, or Adafruit_DHT.AM2302.
-sensor = Adafruit_DHT.DHT11
-
-# Example using a Beaglebone Black with DHT sensor
-# connected to pin P8_11.
-#pin = 'P8_11'
-
-# Example using a Raspberry Pi with DHT sensor
-# connected to GPIO23.
-pin1 = 22
-pin2 = 23
-pin3 = 24
-pin4 = 25
-
-# Try to grab a sensor reading.  Use the read_retry method which will retry up
-# to 15 times to get a sensor reading (waiting 2 seconds between each retry).
-humidity1, temperature1 = Adafruit_DHT.read_retry(sensor, pin1)
-humidity2, temperature2 = Adafruit_DHT.read_retry(sensor, pin2)
-humidity3, temperature3 = Adafruit_DHT.read_retry(sensor, pin3)
-humidity4, temperature4 = Adafruit_DHT.read_retry(sensor, pin4)
-
-# Note that sometimes you won't get a reading and
-# the results will be null (because Linux can't
-# guarantee the timing of calls to read the sensor).
-# If this happens try again!
-if humidity1 is not None and temperature1 is not None:
-    print('1st: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature1, humidity1))
-    
-    call(["./1"])
-else:
-    print('Failed to get first readings. Try again!')
-    call(["./2"])
-if humidity2 is not None and temperature2 is not None:
-    print('2nd: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature2, humidity2))
-    call(["./1"])
-else:
-    print('Failed to get second readings. Try again!')
-    call(["./2"])
-
-if humidity3 is not None and temperature3 is not None:
-    print('3rd: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature3, humidity3))
-    call(["./1"])
-else:
-    print('Failed to get third readings. Try again!')
-    call(["./2"])
-
-if humidity4 is not None and temperature4 is not None:
-    print('4th: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature4, humidity4))
-    call(["./1"])
-else:
-    print('Failed to get fourth readings. Try again!')
-    call(["./2"])
-</pre></code>
-
-<br>
-<h3>C program for LED blink green</h3>
-<code><pre>#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdint.h&gt;
-#include &lt;wiringPi.h&gt;
-int main (void)
-{
-	int i = 0;
-	if (wiringPiSetup () == -1)
-		exit (1) ;
-	//printf ("Success\n") ;
-	pinMode (0, OUTPUT) ;
-	pinMode (1, PWM_OUTPUT) ;
-	for (i = 0; i &lt; 1; i++)
-	{
-		digitalWrite (0, LOW) ;
-		pwmWrite (1, 1023) ;
-		delay (500);
-
-		digitalWrite (0, LOW) ;
-		pwmWrite (1, 0) ;
-		delay (500);
-	}
-	return 0 ;
-}
-</pre></code>
-
-<br>
-<h3>C program for LED blink red</h3>
-<code><pre>#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdint.h&gt;
-#include &lt;wiringPi.h&gt;
-int main (void)
-{
-	int i = 0;
-	if (wiringPiSetup () == -1)
-		exit (1) ;
-	//printf ("Fail\n") ;
-	pinMode (0, OUTPUT) ;
-	pinMode (1, PWM_OUTPUT) ;
-	for (i = 0; i &lt; 1; i++)
-	{
-		digitalWrite (0, HIGH);
-		pwmWrite (1, 0) ;
-		delay (500);
-
-		digitalWrite (0, LOW) ;
-		pwmWrite (1, 0) ;
-		delay (500);
-	}
-	return 0 ;
-}
-
-</pre></code>
+  <a href="code/temp.py">Avarage Temp and Humidity from 4 sensors</a>
+  <br>
+  <a href="code/coordinates.py">Coordinates calculation</a>
+  <br>
+  <a href="code/1.c">LED blink green, for reading indication</a>
+  <br>
+  <p>In order to make the reading from the sensors be captured every minute I used crontab servise, that is embeded in UNIX system. Every minute I get the reading from two programs, and save the output into the txt files. Also, crontab will call the LED blinking program, to indicate readings.</p>    
+  <br>
+  <img src="media/crontab-call.png" alt="crontab-call" style = "width:400px;height:200px;">    
+  <br>
+  <img src="media/crontab.png" alt="PCB_scheme"  style = "width:800px;height:400px;">
+      
+  <p>This <a href="https://www.stewright.me/2015/08/tutorial-install-apache-php-and-mysql-on-a-raspberry-pi-2/">tutorial</a> can be used toset up the apache server. When everything is up and running, and you can see the welcome sreen to apache, we can proced to next step.</p>
+      
+  <img src="media/apache.png" alt="crontab-call" style = "width:600px;height:400px;">  
+      
+  <p>In next step we will load 2 pages. Both of them are using local files with the data, the onces where the crontab saves it. You can make the symlink to the original files, and place them in the html folder, or just point to their actual location. Make sure you grant the permissions to work in the html folder with the 'chmod' command. My Temp/Hum graph uses the dygraph javascrip library, that is linked. Just place it in the html folder.</p>
+      
+  <a href="code/html/temp.html">Temp/Hum graph</a>
+  <br>    
+  <a href="code/html/cluster.html">Cluset</a>
+  <br> 
+  <a href="code/html/dygraph-combined.js">Dygraph javascript library</a>
+  <br>
+  <a href="code/html/bee.png">Bee picture</a>
+  <br>
+  <a href="code/html/hive.jpg">Hive picture(canvas)</a>
+  <br> 
+      
+  <p>After you have all the files in the html folder, call your local IP address in the browser, with the extention of the name of the html files. If the instructions are followed, this should be result: </p>
+   
+  <img src="media/cluster.png" alt="budget" style="width:450px;height:300px;">
+  <img src="media/graph.png" alt="budget" style="width:450px;height:300px;">
+      
  </SECTION>
 
   <SECTION ID="Unit_test">
   <H1>Unit Testing</H1>
-  <p>If the set up steps will be followed, then the following result should be expected:</p>
+  <p>For the unit testing I used my original program with reading temperature and humidity, but instead of displaying only the avarage result I display all the readings, then the following result should be expected:</p>
   
   <img src="media/output_screen.png" alt="laser_cut" style="width:600px;height:400px;">
+  <br>
+  <a href="code/simpletest.py">Unit testing code</a>
 
     <p>If you don’t have the PCB with the LED, it’s ok, the program will still work. With Adafruit library we can use any GPIO pin. In case if any of the sensor isn’t operating properly, the program will take longer time to execute, as it will try to access the sensor few times. If thank was unsuccessful, then the message will appear, that will inform user that there a problem with particular sensor.</p>
   
@@ -400,7 +232,7 @@ int main (void)
  
    <SECTION ID="Production_Testing">
   <H1>Production Testing</H1>
-  <p>Now, if you were able to successfully retrieve the data from the sensors, and build your PCB, you can see that when ever the readings are being made through the Python program, the C program is being called, in order to indicate user that the readings were successful or not.</p>
+  <p>Now, if you were able to successfully retrieve the data from the sensors, and build your PCB, you can see that when ever the readings are being made through the Python program, the C program is being called, in order to indicate user that the readings were successful. After that, if the Apache server was installed and the html code was loaded, the result will be displayed on the temp/humidity diagram, and clusted location presentation.</p>
   
  </SECTION>
 
