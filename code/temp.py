@@ -34,6 +34,9 @@ sensor = Adafruit_DHT.DHT11
 # Example using a Raspberry Pi with DHT sensor
 # connected to GPIO23.
 pin1 = 19
+pin2 = 22
+pin3 = 38
+pin4 = 40
 temp = 0
 hum = 0
 temp_list = []
