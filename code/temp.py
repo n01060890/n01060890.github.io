@@ -33,10 +33,7 @@ sensor = Adafruit_DHT.DHT11
 
 # Example using a Raspberry Pi with DHT sensor
 # connected to GPIO23.
-pin1 = 22
-pin2 = 23
-pin3 = 24
-pin4 = 25
+pin1 = 19
 temp = 0
 hum = 0
 temp_list = []
@@ -58,40 +55,32 @@ if humidity1 is not None and temperature1 is not None:
     #print('1st: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature1, humidity1))
     temp_list.append(temperature1)
     hum_list.append(humidity1)
-    #call(["./1"])
 else:
     #print('Failed to get first readings. Try again!')
     fail = 1
-    #call(["./2"])
 if humidity2 is not None and temperature2 is not None:
     #print('2nd: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature2, humidity2))
     temp_list.append(temperature2)
     hum_list.append(humidity2)
-    #call(["./1"])
 else:
     #print('Failed to get second readings. Try again!')
     fail = 1
-    #call(["./2"])
 
 if humidity3 is not None and temperature3 is not None:
     #print('3rd: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature3, humidity3))
     temp_list.append(temperature3)
     hum_list.append(humidity3)
-    #call(["./1"])
 else:
     #print('Failed to get third readings. Try again!')
     fail = 1
-    #call(["./2"])
 
 if humidity4 is not None and temperature4 is not None:
     #print('4th: Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature4, humidity4))
     temp_list.append(temperature4)
     hum_list.append(humidity4)
-    #call(["./1"])
 else:
     #print('Failed to get fourth readings. Try again!')
     fail = 1
-    #call(["./2"])
 
 if fail != 1:
     temp = (temp_list[0] + temp_list[1] + temp_list[2] + temp_list[3])/4
